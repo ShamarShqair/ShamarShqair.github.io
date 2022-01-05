@@ -12,31 +12,32 @@ library(tidyverse)
 library(tidyquant)
 library(ggpubr)
 library(stringr)
-library(readxl)
+
 library(choroplethr)
 library(choroplethrMaps)
 library(RColorBrewer)
 library(scales)
+library(readxl)
 ```
 
 ```{r data, echo=FALSE, message=FALSE, warning=FALSE}
 
 # Load COVID-19 case data from Michigan state site
-download.file("https://www.michigan.gov/documents/coronavirus/Cases_and_Deaths_by_County_and_by_Date_of_Symptom_Onset_or_by_Date_of_Death2021-12-29_744483_7.xlsx", destfile="./rawData/Cases_by_County_and_Date.xlsx")
+#download.file("https://www.michigan.gov/documents/coronavirus/Cases_and_Deaths_by_County_and_by_Date_of_Symptom_Onset_or_by_Date_of_Death2021-12-29_744483_7.xlsx", destfile="Cases_by_County_and_Date.xlsx")
 
-michiganData <- read_xlsx("./rawData/Cases_by_County_and_Date.xlsx")
+michiganData <- read_xlsx("Cases_by_County_and_Date.xlsx")
 
 # Load county census data
-censusData <- read_csv("./rawData/csvData.csv")
+censusData <- read_csv("csvData.csv")
 
 # Load county map codes
 data(county.regions)
 
 # Load population densities
-density <- read_csv("./rawData/density.csv")
+density <- read_csv("density.csv")
 
 # Load state mortality data
-mortality <- read_csv("./rawData/StateMortalityData.csv")
+mortality <- read_csv("StateMortalityData.csv")
 
 ```
 
@@ -85,19 +86,19 @@ michiganData <- left_join(michiganData, density, by = c("County"))
 # Get just the confirmed cases
 michiganConfirmedData <- michiganData %>% 
   filter(Status == "Confirmed")
-write_csv(michiganConfirmedData, "./processedData/michiganConfirmedData.csv")
+write_csv(michiganConfirmedData, "michiganConfirmedData.csv")
 
 # Get just the probable cases
 michiganProbableData <- michiganData %>% 
   filter(Status == "Probable")
-write_csv(michiganProbableData, "./processedData/michiganProbableData.csv")
+write_csv(michiganProbableData, "michiganProbableData.csv")
 
 # Add confirmed and probable cases to get total cases
 michiganTotalData <- tibble(County = michiganConfirmedData$County, Date = michiganConfirmedData$Date, Status = "Total", Cases = michiganConfirmedData$Cases + michiganProbableData$Cases, Deaths = michiganConfirmedData$Deaths + michiganProbableData$Deaths, Cases.Cumulative = michiganConfirmedData$Cases.Cumulative + michiganProbableData$Cases.Cumulative, Deaths.Cumulative = michiganConfirmedData$Deaths.Cumulative + michiganProbableData$Deaths.Cumulative, Updated = michiganConfirmedData$Updated, Region = michiganConfirmedData$region, County.FIPS.Character = michiganConfirmedData$county.fips.character, State.Name = michiganConfirmedData$state.name, State.FIPS.Character = michiganConfirmedData$state.fips.character, State.Abb = michiganConfirmedData$state.abb, pop2018 = michiganConfirmedData$pop2018, GrowthRate = michiganConfirmedData$GrowthRate, Density = michiganConfirmedData$Density)
 metroCounty <- c("macomb", "oakland", "wayne")
 michiganTotalData$Detroit <- ifelse(michiganTotalData$County %in% metroCounty, "Yes", "No")
 
-write_csv(michiganTotalData, "./processedData/michiganTotalData.csv")
+write_csv(michiganTotalData, "michiganTotalData.csv")
 
 # Summarize total numbers for the three-county metro Detroit area
 metroDetroit <- michiganTotalData %>% 
@@ -106,7 +107,7 @@ metroDetroit <- michiganTotalData %>%
   mutate(Cases = sum(Cases), Deaths = sum(Deaths), Cases.Cumulative = sum(Cases.Cumulative), Deaths.Cumulative = sum(Deaths.Cumulative))
 metroDetroit <- metroDetroit %>% filter(County == "wayne")
 metroDetroit$County <- "Metro Detroit"
-write_csv(metroDetroit, "./processedData/metroDetroit.csv")
+write_csv(metroDetroit, "metroDetroit.csv")
 
 # Summarize total numbers for the rest of Michigan
 notDetroit <- michiganTotalData %>% 
@@ -115,14 +116,14 @@ notDetroit <- michiganTotalData %>%
   mutate(Cases = sum(Cases), Deaths = sum(Deaths), Cases.Cumulative = sum(Cases.Cumulative), Deaths.Cumulative = sum(Deaths.Cumulative))
 notDetroit <- notDetroit %>% filter(County == "mecosta")
 notDetroit$County <- "Not Detroit"
-write_csv(notDetroit, "./processedData/notDetroit.csv")
+write_csv(notDetroit, "notDetroit.csv")
 
 # Summarize total numbers for the entire state of Michigan
 total <- michiganTotalData %>% 
   group_by(Date) %>% 
   mutate(Cases = sum(Cases), Deaths = sum(Deaths), Cases.Cumulative = sum(Cases.Cumulative), Deaths.Cumulative = sum(Deaths.Cumulative))
 total$County <- "Total"
-write_csv(total, "./processedData/total.csv")
+write_csv(total, "total.csv")
 
 # Create on comparison set
 compareDetroit <- rbind(total, metroDetroit, notDetroit)
@@ -137,7 +138,7 @@ metroDataNorm <- michiganTotalData %>%
   group_by(County) %>% 
   summarize(Cases = max(Cases.Cumulative)/pop2018*100000, Deaths = max(Deaths.Cumulative)/pop2018*100000, Detroit = Detroit)
 metroDataNorm <- unique(metroDataNorm)
-write_csv(metroDataNorm, "./processedData/normData.csv")
+write_csv(metroDataNorm, "normData.csv")
 
 weekly <- michiganTotalData %>% group_by(County, Week = week(Date)) %>% summarise(Weekly.Cases = sum(Cases), Weekly.Deaths = sum(Deaths), Case.Mortality=Weekly.Deaths/Weekly.Cases*100)
 
@@ -149,7 +150,7 @@ dataSummary <- unique(dataSummary)
 
 mortality <- cbind(mortality, metroDataNorm$Deaths)
 mortality <- mortality %>% rename("COVID-19" = "metroDataNorm$Deaths")
-write_csv(mortality, "./processedData/stateMortality.csv")
+write_csv(mortality, "stateMortality.csv")
 ```
 
 ## Introduction  
