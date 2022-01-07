@@ -12,7 +12,6 @@ library(tidyverse)
 library(tidyquant)
 library(ggpubr)
 library(stringr)
-
 library(choroplethr)
 library(choroplethrMaps)
 library(RColorBrewer)
@@ -153,6 +152,7 @@ mortality <- mortality %>% rename("COVID-19" = "metroDataNorm$Deaths")
 write_csv(mortality, "stateMortality.csv")
 ```
 
+## Introduction  
 This document is based off COVID-19 cases in Michigan. Figure 1 is based off COVID-19 cases as well as deaths in the state of MIchigan. While figure 2 is based off of statewide distribution of COVID-19 cases in Michigan. Lastly, figure 3 is also based off of COVID-19 cases and how they differ in different counties within Michigan. All this data has been collected and studied since 2020.
 
 ## Data  
@@ -165,20 +165,47 @@ The number of cases and deaths per day are recorded for both confirmed and proba
 
 GIS information was left-joined onto the total data. The census data was also left-joined and used to create population-normalized values (cases or deaths per 100,000 population).
 
+## Statewide distribution   
+The lower south-east and the far south- west parts of Michigan was much higher than the rest of Michigan when comparing cases and death of COVID-19  since 2020 by regions.
+```{r state_map1, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=12, fig.cap="**Figure 1:** Statewide distribution of COVID-19 cases and deaths, by region"}
+mapDataA <- michiganTotalData %>% 
+  group_by(Region) %>% 
+  rename(region = Region) %>% 
+  summarize(value = max(Cases.Cumulative))
+mapDataA <- unique(mapDataA)
+
+mapA <- county_choropleth(mapDataA, state_zoom = "michigan", num_colors = 1)
+
+mapDataB <- michiganTotalData %>% 
+  group_by(Region) %>% 
+  rename(region = Region) %>% 
+  summarize(value = max(Deaths.Cumulative))
+mapDataB <- unique(mapDataB)
+
+mapB <- county_choropleth(mapDataB, state_zoom = "michigan", num_colors = 1) 
+
+ggarrange(mapA, mapB, labels = c("A", "B"), ncol = 1, nrow = 2, font.label = list(size = 28, color = "black", face = "bold", family = NULL))
+
+```
+
 ## State Overall Trends
-Using the county maps below as an example, create a figure showing cases for the entire state over time.
-
-
+Overall the number of cases of COVID-19 did spike in April of 2020, December 2020, end of April 2021, and the largest spike of cases in end of December of 2021 and beginning of January 2022. The first spike hit about 600-700 cases while the second spike hit about 1000 cases. The third spike reached about 1500 cases, and lastly the final spike towards the end of 2021 reaches between 2500 and 3000. 
+```{r state_plot, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=7, fig.cap="**Figure 2:** State overall trends on COVID-19 cases throughout Michigan"}
+ggplot(michiganTotalData, aes(x=Date, y=Cases, color= "blue")) +
+  scale_x_datetime(breaks = date_breaks("months"),labels = date_format("%b"))+
+  theme(legend.position = "none") +
+  geom_point()
+```
 
 ## Comparing Counties
-Select three counties that experienced different COVID incidences and compare them below. Change the vertical lines to delimit the initial outbreak, alpha, delta, and omicron variants.
+There are three counties included in this data over COVID-19 cases in Michigan being, Kent, Wayne, and Genesee.All results for these three counties are very similar in trends but Wayne county was highest, its highest peak reaching about 18000 cases. Kent county coming in next closest with its peak reaching about 7500 cases. Lastly, Genesee coming in with its highest peak at 4500 cases. 
 
-```{r county_plot, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=7, fig.cap="**Figure 2:** Add a legend here"}
+```{r county_plot, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=7, fig.cap="**Figure 3:** Comparing COVID-19 cases in different counties "}
 counties <- michiganTotalData %>% 
-  filter(County == "isabella" | County == "mecosta" | County == "ottawa")
+  filter(County == "kent" | County == "wayne" | County == "genesee")
 ggplot(counties, aes(x=Date, y=Cases, color=County, fill=County)) +
-  scale_color_manual(values=c('mecosta'="firebrick", 'isabella'="dodgerblue", 'ottawa'="steelblue")) +
-  scale_fill_manual(legend, values=c('mecosta'="firebrick", 'isabella'="dodgerblue", 'ottawa'="steelblue")) +
+  scale_color_manual(values=c('kent'="red", 'wayne'="green", 'genesee'="blue")) +
+  scale_fill_manual(legend, values=c('kent'="red", 'wayne'="green", 'genesee'="blue")) +
   scale_x_datetime(breaks = date_breaks("months"),labels = date_format("%b")) +
   geom_bar(stat = "identity") +
   geom_ma(ma_fun = EMA, n = 7, wilder = TRUE, linetype = 1, size = 2) +
@@ -190,12 +217,12 @@ ggplot(counties, aes(x=Date, y=Cases, color=County, fill=County)) +
         axis.title=element_text(size=18,face="bold"))
 ```
 
-```{r weekly_county_plot, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=7, fig.cap="**Figure 6:** A comparison of the number of total cases in Isabella, Mecosta, and Ottawa counties by week. The bars indicate total daily cases and the lines are four-week moving averages." }
+```{r weekly_county_plot, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=7, fig.cap="**Figure 4 :** A comparison of the number of total cases in Kent, Wayne, and Genesee counties by week. The bars indicate total daily cases and the lines are four-week moving averages." }
 counties <- weekly %>% 
-  filter(County == "isabella" | County == "mecosta" | County == "ottawa")
+  filter(County == "kent" | County == "wayne" | County == "genesee")
 ggplot(counties, aes(x=Week, y=Weekly.Cases, color=County, fill=County)) +
-    scale_color_manual(values=c('mecosta'="firebrick", 'isabella'="dodgerblue", 'ottawa'="steelblue")) +
-  scale_fill_manual(legend, values=c('mecosta'="firebrick", 'isabella'="dodgerblue", 'ottawa'="steelblue")) +
+    scale_color_manual(values=c('kent'="red", 'wayne'="green", 'genesee'="blue")) +
+  scale_fill_manual(legend, values=c('kent'="red", 'wayne'="green", 'genesee'="blue")) +
   geom_bar(stat = "identity") +
   geom_ma(ma_fun = EMA, n = 4, wilder = TRUE, linetype = 1, size = 2) +
   facet_grid(rows=vars(County), scales="free_y") +
@@ -206,9 +233,4 @@ ggplot(counties, aes(x=Week, y=Weekly.Cases, color=County, fill=County)) +
 ```
 
 ## Conclusions  
-Conclusions go here.
-
-## References
-Any references here.
-
-
+In conclusion, the data showed that throughout March 2020 to this day Michigan has had a roller coaster COVID-19 cases and deaths. This is shown by figure 2, which is showing the spikes and lows of COVID-19 cases in the state of Michigan since March 2020. Figure 3 also shows the ups and down of COVID-19 cases in Kent, Wayne, and Genesee counties and how they have all spiked at similar times just with different numbers of cases. Figure 4, all share similar data as figure 3 but just by week instead of date. To wrap up, right now is the highest continuous spike of COVID-19 cases since March 2020 in Michigan. 
