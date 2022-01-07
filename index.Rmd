@@ -153,8 +153,7 @@ mortality <- mortality %>% rename("COVID-19" = "metroDataNorm$Deaths")
 write_csv(mortality, "stateMortality.csv")
 ```
 
-## Introduction  
-Your introduction hello world 
+This document is based off COVID-19 cases in Michigan. Figure 1 is based off COVID-19 cases as well as deaths in the state of MIchigan. While figure 2 is based off of statewide distribution of COVID-19 cases in Michigan. Lastly, figure 3 is also based off of COVID-19 cases and how they differ in different counties within Michigan. All this data has been collected and studied since 2020.
 
 ## Data  
 The Michigan COVID-19 data for this document were obtained at https://www.michigan.gov/coronavirus/0,9753,7-406-98163_98173---,00.html in the Public Use Datasets called "Cases by County and Date". The **December 29, 2021** dataset was used to create this report. Michigan county populations were found at https://worldpopulationreview.com/us-counties/states/mi which gives the 2018 census numbers. These were the most recent reliable numbers that I could find at the moment.
@@ -166,28 +165,6 @@ The number of cases and deaths per day are recorded for both confirmed and proba
 
 GIS information was left-joined onto the total data. The census data was also left-joined and used to create population-normalized values (cases or deaths per 100,000 population).
 
-## Statewide distribution   
-Describe and explain the distribution below
-
-```{r state_map1, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=12, fig.cap="**Figure 1:** Add a legend here"}
-mapDataA <- michiganTotalData %>% 
-  group_by(Region) %>% 
-  rename(region = Region) %>% 
-  summarize(value = max(Cases.Cumulative))
-mapDataA <- unique(mapDataA)
-
-mapA <- county_choropleth(mapDataA, state_zoom = "michigan", num_colors = 1)
-
-mapDataB <- michiganTotalData %>% 
-  group_by(Region) %>% 
-  rename(region = Region) %>% 
-  summarize(value = max(Deaths.Cumulative))
-mapDataB <- unique(mapDataB)
-
-mapB <- county_choropleth(mapDataB, state_zoom = "michigan", num_colors = 1) 
-
-ggarrange(mapA, mapB, labels = c("A", "B"), ncol = 1, nrow = 2, font.label = list(size = 28, color = "black", face = "bold", family = NULL))
-```
 ## State Overall Trends
 Using the county maps below as an example, create a figure showing cases for the entire state over time.
 
